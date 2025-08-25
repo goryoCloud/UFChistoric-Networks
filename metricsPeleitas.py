@@ -1,0 +1,444 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct 13 16:05:17 2023
+
+@author: max_s
+"""
+import pandas as pd
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+import os
+
+#%%
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.sans-serif": "mathptmx",})
+
+plt.rc('axes', labelsize='x-large')
+plt.rc('axes', titlesize='x-large')
+plt.rc('xtick', labelsize='x-large')
+plt.rc('ytick', labelsize='x-large')
+#%%
+data = pd.read_csv('C:/Users/max_s/Desktop/MAGISTER-MAX/NOTES/UFC/data.csv')
+PPVdata = pd.read_csv('C:/Users/max_s/Desktop/MAGISTER-MAX/NOTES/UFC/UFCDATA/ufc_ppv_buys.csv')
+
+PPVdata['date'] = pd.to_datetime(PPVdata[['Year', 'Month', 'Day']])
+PPVdataSorted = PPVdata.sort_values(by='date')
+#%%
+def norm(x):
+    normValues = []
+    norma = sum(x)
+    for i in x:
+        normValue = i /norma
+        normValues.append(normValue)
+        normValuesA = np.array(normValues)
+    normValues.clear()
+    return (normValuesA)
+
+def degree_histogram_directed(G, in_degree=False, out_degree=False):
+    nodes = G.nodes()
+    if in_degree:
+        in_degree = dict(G.in_degree())
+        degseq=[in_degree.get(k,0) for k in nodes]
+    elif out_degree:
+        out_degree = dict(G.out_degree())
+        degseq=[out_degree.get(k,0) for k in nodes]
+    else:
+        degseq=[v for k, v in G.degree()]
+    dmax=max(degseq)+1
+    freq= [ 0 for d in range(dmax) ]
+    for d in degseq:
+        freq[d] += 1
+    return freq
+
+def fit_exponential_polyfit(x_data, y_data):
+    # Take the logarithm of positive y_data, leave zero values as they are
+    maskData = y_data > 0
+    dataToFitX = x_data[maskData]
+    dataToFitY = y_data[maskData]
+    
+    log_y_data = np.log(dataToFitY)
+
+    # Fit a polynomial to the log-transformed data
+    fit = np.poly1d(np.polyfit(dataToFitX, log_y_data, 1))
+    t = np.linspace(min(dataToFitX), max(dataToFitX), 100)
+
+    # Extract the fitted parameters
+    y_fit = fit[1]*t + fit[0]
+
+    return y_fit, t, fit[1]
+
+def cum_deg_sum(graph):
+    import collections
+    degree_sequence = sorted([d for n, d in graph.degree()], reverse=True)  # degree sequence
+    degreeCount = collections.Counter(degree_sequence)
+    deg, cnt = zip(*degreeCount.items())
+    cs = np.cumsum(cnt)
+    return deg, cs
+
+def cumulative_prob(pmf, x):
+    ps = [pmf[value] for value in pmf if value<=x]
+    return np.sum(ps)
+
+def average_degree_distribution(graph):
+    degree_distribution = dict(graph.degree())
+
+    # Calculate the average degree
+    average_degree = sum(degree_distribution.values()) / len(degree_distribution)
+
+    return average_degree
+
+def graph_density(graph):
+    density = nx.density(graph)
+
+    return density
+
+def average_clustering_coefficient(graph):
+    avg_clustering = nx.average_clustering(graph)
+
+    return avg_clustering
+
+def gini(graph):
+    degrees = dict(graph.degree())
+    degree_values = sorted(degrees.values())
+    n = len(degree_values)
+    index = np.arange(1, n + 1)
+    gini_coefficient = (np.sum((2 * index - n - 1) * degree_values)) / (n * np.sum(degree_values))
+    
+    return gini_coefficient
+
+def compute_average_path_length(graph):
+    avg_path_length = nx.average_shortest_path_length(graph)
+
+    return avg_path_length
+
+def pearsonCoeff(arrayX, arrayY):
+    return pearsonr(arrayX, arrayY)
+#%%
+fights = nx.Graph()
+
+def get_data_in_window(start_date, end_date):
+    return data.loc[start_date:end_date]
+
+def get_PPV_data_in_window(start_date, end_date):
+    return PPVdataSorted.loc[start_date:end_date]
+
+maleWeights = ['Bantamweight', 'Middleweight', 'Heavyweight', 'Lightweight', 'Welterweight', 'Flyweight', 'LightHeavyweight', 'Featherweight', 'CatchWeight', 'OpenWeight']
+data['date'] = pd.to_datetime(data['date'])
+data = data.sort_values('date')
+data = data.set_index('date')
+PPVdataSorted = PPVdataSorted.set_index('date')
+window_size = pd.DateOffset(years = 4)
+freq = pd.DateOffset(months=1)
+
+start_date = data.index.min()
+end_date = start_date + window_size
+result = []
+#componentList = []
+deg = []
+den = []
+clust = []
+gin = []
+#path = []
+numFights = []
+numFighters = []
+
+dates = []
+PPVsales = []
+
+numWin = 0
+while end_date <= data.index.max():
+    fightCount = 0
+    
+    window_data = get_data_in_window(start_date, end_date)
+    PPV_window_data = get_PPV_data_in_window(start_date, end_date)
+    
+    meanPPV = PPV_window_data['PPV'].mean()
+#    if math.isnan(meanPPV):
+#        PPVsales.append(0)
+#    else:
+#        PPVsales.append(meanPPV)
+    PPVsales.append(meanPPV)   
+
+    for fight in range(0, len(window_data)):
+        if window_data['weight_class'][fight] in maleWeights:
+            fights.add_edge(window_data["R_fighter"][fight], window_data["B_fighter"][fight])
+            fightCount = fightCount + 1
+
+    numWin = numWin + 1
+    hist = nx.degree_histogram(fights)
+    degrees = range(0, len(hist))
+    
+#    plt.title(f'Degree dist. fights window = {numWin}')
+#    plt.plot(degrees, norm(hist), '-ko', ms = 7)
+#    plt.yscale('log')
+#    plt.xscale('log')
+#    plt.xlabel('$k$')
+#    plt.ylabel(r'$p(k)$')
+#    plt.show()
+    
+    
+    concatenated_columns = pd.concat([window_data["R_fighter"], window_data["B_fighter"]])
+    num_unique_fighters = concatenated_columns.nunique()
+    
+    windowDates = numWin, str(start_date), str(end_date)
+    
+    dates.append(windowDates)
+    
+    avDeg = average_degree_distribution(fights)
+    avDens = graph_density(fights)
+    avClust = average_clustering_coefficient(fights)
+    locGin = gini(fights)
+#    locPathLenght = compute_average_path_length(fights)
+    
+    deg.append(avDeg)
+    den.append(avDens)
+    clust.append(avClust)
+    gin.append(locGin)
+    numFights.append(fightCount)
+    numFighters.append(num_unique_fighters)
+#    components = list(nx.connected_components(fights))
+    
+#    for i in components:
+#        componentList.append(len(i))
+        
+#    with open("components.txt", "a+") as file_object:
+#        file_object.seek(0)
+#        aaa = file_object.read(100)
+#        if len(aaa) > 0 :
+#            file_object.write("\n ")
+
+#        file_object.write(str(componentList))
+    
+#    componentList.clear()
+    fights.clear()
+    
+    start_date += freq
+    end_date += freq
+#%%
+
+plt.title('Evolution average clustering coeff.')
+plt.plot(clust, '-ro', ms = 1, lw = 2)
+plt.xlabel('window index')
+plt.ylabel(r'$\langle C  \rangle$')
+plt.xlim(0, len(clust))
+plt.show()
+
+plt.title('Evolution average degree dist.')
+plt.plot(deg, '-bo', ms = 1, lw = 2)
+plt.xlabel('window index')
+plt.ylabel(r'$\langle p(k)  \rangle$')
+plt.xlim(0, len(clust))
+plt.show()
+
+plt.title('Evolution norm. degree distribution average')
+plt.plot(den, '-go', ms = 1, lw = 2)
+plt.xlabel('window index')
+plt.ylabel(r'$\langle p(k)  \rangle/N$')
+plt.xlim(0, len(clust))
+plt.show()
+
+plt.title('Evolution gini coeff.')
+plt.plot(gin, '-mo', ms = 1, lw = 2)
+plt.xlabel('window index')
+plt.ylabel(r'$ G[p(k)] $')
+plt.xlim(0, len(clust))
+plt.show()
+
+plt.title('Number of Fights.')
+plt.plot(numFights, '-ko', ms = 1, lw = 2)
+plt.xlabel('window index')
+plt.ylabel(r'$N$')
+plt.xlim(0, len(clust))
+plt.show()
+
+#plt.title('Evolution path length.')
+#plt.plot(path, '-ko', ms = 5)
+#plt.xlabel('window index')
+#plt.ylabel(r'$\langle l  \rangle$')
+#plt.show()
+
+plt.title('Number of Fighters')
+plt.plot(numFighters, '-ko', ms = 1, lw = 2)
+plt.xlabel('window index')
+plt.ylabel(r'$N$')
+plt.xlim(0, len(clust))
+plt.show()
+
+plt.title('Diff. number of Fighters')
+plt.plot(np.diff(numFighters), '-ko', ms = 1, lw = 1)
+plt.xlabel('window index')
+plt.ylabel(r'$N_i - N_{i-1}$')
+plt.xlim(0, len(clust))
+plt.show()
+
+plt.title('Diff. avg. deg dist.')
+plt.plot(np.diff(deg), '-bo', ms = 1, lw = 1)
+plt.xlabel('window index')
+plt.ylabel(r'$\langle p(k_{i})  \rangle - \langle p(k_{i-1})  \rangle$')
+plt.xlim(0, len(clust))
+plt.show()
+#%%
+#plt.title('PPV sales')
+#plt.plot(PPVsales,'-k', ms = 1, lw = 2, alpha = 0.5)
+#plt.xlabel('window index')
+#plt.ylabel(r'N of PPV sales')
+#plt.xlim(0, len(clust))
+#plt.ylim(0)
+#%%
+#plt.title('Evolution average clustering coeff.')
+#plt.plot(clust, '-ro', ms = 1, lw = 2)
+#plt.xlabel('window index')
+#plt.ylabel(r'$\langle C  \rangle$')
+#plt.xlim(0, len(clust))
+#plt.show()
+#%%
+from matplotlib.ticker import ScalarFormatter
+
+fig, ax1 = plt.subplots()
+ax1.plot(clust, color='red', lw  = 2, label=r'$\langle C  \rangle$')
+ax1.set_xlabel('window index')
+ax1.set_ylabel(r'$\langle C  \rangle$', color='red')
+ax1.tick_params('y', colors='red')
+
+# Create the second plot with the right y-axis
+ax2 = ax1.twinx()
+ax2.plot(PPVsales,'-k', ms = 1, lw = 2, alpha = 0.3)
+ax2.set_ylabel('N of PPV sales', color='k')
+ax2.tick_params('y', colors='k')
+
+plt.title('Evolution average clustering coeff.')
+plt.xlim(0, len(clust))
+ax2.set_ylim(52857)
+ax2.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=True))
+plt.show()
+#%%
+fig, ax1 = plt.subplots()
+ax1.plot(deg, color='blue', lw  = 2, label=r'$\langle C  \rangle$')
+ax1.set_xlabel('window index')
+ax1.set_ylabel(r'$\langle p(k)  \rangle$', color='blue')
+ax1.tick_params('y', colors='blue')
+
+# Create the second plot with the right y-axis
+ax2 = ax1.twinx()
+ax2.plot(PPVsales,'-k', ms = 1, lw = 2, alpha = 0.3)
+ax2.set_ylabel('N of PPV sales', color='k')
+ax2.tick_params('y', colors='k')
+
+plt.title('Evolution average degree dist.')
+plt.xlim(0, len(clust))
+ax2.set_ylim(52857)
+ax2.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=True))
+plt.show()
+#%%
+fig, ax1 = plt.subplots()
+ax1.plot(den, color='green', lw  = 2, label=r'$D$')
+ax1.set_xlabel('window index')
+ax1.set_ylabel(r'$D$', color='green')
+ax1.tick_params('y', colors='green')
+
+# Create the second plot with the right y-axis
+ax2 = ax1.twinx()
+ax2.plot(PPVsales,'-k', ms = 1, lw = 2, alpha = 0.3)
+ax2.set_ylabel('N of PPV sales', color='k')
+ax2.tick_params('y', colors='k')
+
+plt.title('Evolution norm. degree distribution average')
+plt.xlim(0, len(clust))
+ax2.set_ylim(52857)
+ax2.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=True))
+plt.show()
+#%%
+fig, ax1 = plt.subplots()
+ax1.plot(gin, color='m', lw  = 2, label=r'$\langle C  \rangle$')
+ax1.set_xlabel('window index')
+ax1.set_ylabel(r'$ G[p(k)] $', color='m')
+ax1.tick_params('y', colors='m')
+
+# Create the second plot with the right y-axis
+ax2 = ax1.twinx()
+ax2.plot(PPVsales,'-k', ms = 1, lw = 2, alpha = 0.3)
+ax2.set_ylabel('N of PPV sales', color='k')
+ax2.tick_params('y', colors='k')
+
+plt.title('Evolution gini coeff.')
+plt.xlim(0, len(clust))
+ax2.set_ylim(52857)
+ax2.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=True))
+plt.show()
+#%%
+fig, ax1 = plt.subplots()
+ax1.plot(numFights, color='orange', lw  = 2, label=r'$\langle C  \rangle$')
+ax1.set_xlabel('window index')
+ax1.set_ylabel(r'$N_{fights}$', color='orange')
+ax1.tick_params('y', colors='orange')
+
+# Create the second plot with the right y-axis
+ax2 = ax1.twinx()
+ax2.plot(PPVsales,'-k', ms = 1, lw = 2, alpha = 0.3)
+ax2.set_ylabel('N of PPV sales', color='k')
+ax2.set_ylim(52857)
+ax2.tick_params('y', colors='k')
+
+plt.title('Number of fights.')
+plt.xlim(0, len(clust))
+#plt.ylim(0)
+ax2.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=True))
+plt.show()
+#%%
+from scipy.stats import pearsonr
+
+fig, ax1 = plt.subplots()
+ax1.plot(numFighters, color='olive', lw  = 2, label=r'$\langle C  \rangle$')
+ax1.set_xlabel('window index')
+ax1.set_ylabel(r'$N_{fighters}$', color='olive')
+ax1.tick_params('y', colors='olive')
+
+# Create the second plot with the right y-axis
+ax2 = ax1.twinx()
+ax2.plot(PPVsales,'-k', ms = 1, lw = 2, alpha = 0.3)
+ax2.set_ylabel('N of PPV sales', color='k')
+ax2.tick_params('y', colors='k')
+
+plt.title('Number of fights.')
+plt.xlim(0, len(clust))
+ax2.set_ylim(52857)
+ax2.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=True))
+plt.show()
+#%%
+PPVnonZero = PPVsales[43:]
+#-----------------------------------------------------
+clustPPV =  clust[43:]
+corrClust = pearsonr(PPVnonZero, clustPPV)
+
+degPPV = deg[43:]
+corrDeg = pearsonr(PPVnonZero, degPPV)
+
+denPPV = den[43:]
+corrDen = pearsonr(PPVnonZero, denPPV)
+
+ginPPV = gin[43:]
+corrGin = pearsonr(PPVnonZero, ginPPV)
+
+nFightsPPV = numFights[43:]
+corrNFights = pearsonr(PPVnonZero, nFightsPPV)
+
+nFightersPPV = numFighters[43:]
+corrNFighters = pearsonr(PPVnonZero, nFightersPPV)
+
+xCorr = [r'$\langle C\rangle$', r'$\langle k \rangle$', r'$D$', r'$ G[p(k)] $', r'$N_{fights}$', r'$N_{fighters}$']
+yCorr = [corrClust[0], corrDeg[0], corrDen[0], corrGin[0], corrNFights[0], corrNFighters[0]]
+err = [corrClust[1], corrDeg[1], corrDen[1], corrGin[1], corrNFights[1], corrNFighters[1]]
+
+x_positions = np.arange(len(xCorr))
+plt.errorbar(x_positions, yCorr, yerr=err, fmt='o', color = 'r')
+
+plt.title('correlations')
+plt.xticks(x_positions, xCorr)
+plt.ylim(-1,1)
+plt.axhline(0, color='k')
+plt.ylabel('Pearson correlation coefficient')
+plt.xlabel('metric')

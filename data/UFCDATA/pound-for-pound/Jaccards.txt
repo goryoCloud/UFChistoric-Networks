@@ -1,0 +1,162 @@
+=======================================
+JACCARD P4P
+=======================================
+=== Jaccard Coefficients for results_dict_2013feb_2021mar ===
+degree_un: 0.077
+clust_un: 0.114
+bet_un: 0.054
+eigen_un: 0.089
+degree_w: 0.077
+degree_l: 0.077
+clust_w: 0.126
+clust_l: 0.126
+bet_w: 0.077
+bet_l: 0.077
+eigen_w: 0.101
+eigen_l: 0.101
+degree_dir: 0.043
+clust_dir: 0.153
+bet_dir: 0.077
+eigen_dir: 0.010
+degree_dir_w: 0.032
+degree_dir_l: 0.195
+clust_dir_w: 0.101
+clust_dir_l: 0.065
+bet_dir_w: 0.000
+bet_dir_l: 0.000
+eigen_dir_w: 0.010
+eigen_dir_l: 0.225
+
+=== Jaccard Coefficients for top20_pp_dict_2013feb_2021mar ===
+degree_un: 0.089
+clust_un: 0.065
+bet_un: 0.077
+eigen_un: 0.065
+degree_w: 0.089
+degree_l: 0.089
+clust_w: 0.077
+clust_l: 0.077
+bet_w: 0.101
+bet_l: 0.101
+eigen_w: 0.065
+eigen_l: 0.065
+degree_dir: 0.054
+clust_dir: 0.101
+bet_dir: 0.054
+eigen_dir: 0.000
+degree_dir_w: 0.032
+degree_dir_l: 0.167
+clust_dir_w: 0.089
+clust_dir_l: 0.032
+bet_dir_w: 0.021
+bet_dir_l: 0.021
+eigen_dir_w: 0.010
+eigen_dir_l: 0.181
+================================================================
+RANKED JACCARDS
+================================================================
+=== Jaccard Coefficients for results_dict_2013feb_2021mar ===
+degree_un: 0.473
+clust_un: 0.458
+bet_un: 0.342
+eigen_un: 0.432
+degree_w: 0.467
+degree_l: 0.467
+clust_w: 0.446
+clust_l: 0.446
+bet_w: 0.337
+bet_l: 0.337
+eigen_w: 0.410
+eigen_l: 0.410
+degree_dir: 0.335
+clust_dir: 0.245
+bet_dir: 0.383
+eigen_dir: 0.247
+degree_dir_w: 0.278
+degree_dir_l: 0.476
+clust_dir_w: 0.258
+clust_dir_l: 0.226
+bet_dir_w: 0.367
+bet_dir_l: 0.367
+eigen_dir_w: 0.202
+eigen_dir_l: 0.545
+
+=== Jaccard Coefficients for top20_pp_dict_2013feb_2021mar ===
+degree_un: 0.443
+clust_un: 0.461
+bet_un: 0.322
+eigen_un: 0.322
+degree_w: 0.438
+degree_l: 0.438
+clust_w: 0.455
+clust_l: 0.455
+bet_w: 0.325
+bet_l: 0.325
+eigen_w: 0.327
+eigen_l: 0.327
+degree_dir: 0.231
+clust_dir: 0.330
+bet_dir: 0.372
+eigen_dir: 0.220
+degree_dir_w: 0.162
+degree_dir_l: 0.461
+clust_dir_w: 0.383
+clust_dir_l: 0.310
+bet_dir_w: 0.352
+bet_dir_l: 0.352
+eigen_dir_w: 0.151
+eigen_dir_l: 0.541
+===============================================================
+JACARD CHAMPS
+===============================================================
+=== Jaccard Coefficients for results_dict_2013feb_2021mar ===
+degree_un: 0.043
+clust_un: 0.059
+bet_un: 0.043
+eigen_un: 0.075
+degree_w: 0.075
+degree_l: 0.075
+clust_w: 0.043
+clust_l: 0.043
+bet_w: 0.029
+bet_l: 0.029
+eigen_w: 0.075
+eigen_l: 0.075
+degree_dir: 0.000
+clust_dir: 0.143
+bet_dir: 0.059
+eigen_dir: 0.000
+degree_dir_w: 0.029
+degree_dir_l: 0.143
+clust_dir_w: 0.108
+clust_dir_l: 0.029
+bet_dir_w: 0.000
+bet_dir_l: 0.000
+eigen_dir_w: 0.000
+eigen_dir_l: 0.220
+
+=== Jaccard Coefficients for top20_pp_dict_2013feb_2021mar ===
+degree_un: 0.043
+clust_un: 0.029
+bet_un: 0.059
+eigen_un: 0.043
+degree_w: 0.043
+degree_l: 0.043
+clust_w: 0.029
+clust_l: 0.029
+bet_w: 0.075
+bet_l: 0.075
+eigen_w: 0.043
+eigen_l: 0.043
+degree_dir: 0.029
+clust_dir: 0.059
+bet_dir: 0.029
+eigen_dir: 0.000
+degree_dir_w: 0.014
+degree_dir_l: 0.125
+clust_dir_w: 0.059
+clust_dir_l: 0.014
+bet_dir_w: 0.000
+bet_dir_l: 0.000
+eigen_dir_w: 0.014
+eigen_dir_l: 0.143
